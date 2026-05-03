@@ -1,0 +1,9 @@
+streamlit
+neo4j
+langchain
+langchain-huggingface
+langchain-groq
+langchain-core
+sentence-transformers
+torch
+einops
