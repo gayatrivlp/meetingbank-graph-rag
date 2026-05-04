@@ -17,5 +17,51 @@ This system uses two-stage Graph RAG: Stage 1 runs vector similarity search on *
 
 ## Dataset
 **MeetingBank** (Hu et al., ACL 2023) — a benchmark dataset of 1,366 city council meetings from 6 U.S. municipalities:
+- Seattle
+- King County
+- Denver
+- Boston
+- Alameda
+- Long Beach
+
+This project uses *MeetingBank.json*, which contains meeting metadata, agenda items, reference summaries, and transcript segments. From this:
+- **1,250 meetings** ingested
+- **6,894 agenda items** as graph nodes
+- **133,536 transcript chunks** embedded and stored as vectors
 
 The MeetingBank dataset is a natural fit for this architecture. It has a well-defined entity hierarchy (City → Meeting → Item → TranscriptChunk), structured metadata (item type, duration, links), and domain-specific reference summaries that made evaluation straightforward without needing external labels.
+
+## Graph Schema
+<img width="1720" height="1244" alt="Screenshot 2026-05-03 173755" src="https://github.com/user-attachments/assets/f4efd190-a7e0-483f-bc4e-ceb1a72157f5" />
+
+**Node Design Decisions**
+- *City*- as a node, not a Meeting property. City could have been stored as a simple string property on Meeting, but making it a node enables traversal — querying all meetings across a city, or filtering retrievals by city through the graph rather than a metadata lookup.
+- *ItemType*- as a shared hub node, not an Item property. Storing item type as a string on Item would support filtering, but making it a node means all items of the same type are connected through a shared hub. This enables type-level traversal — finding all Ordinances, all Proclamations — as a graph pattern rather than a property scan.
+- *summary* as a property on Item, not a node. Unlike City and ItemType, summary is not an entity worth traversing to or from. It's an attribute of the item. Promoting it to a node would add complexity with no retrieval benefit.
+- Speaker nodes excluded by design. The use case is policy and topic retrieval, not speaker attribution. Speaker nodes would add traversal complexity and significantly increase the graph size without improving retrieval quality for this task.
+
+## Architecture
+**Two-Stage Retrieval Pipeline**\
+*Stage 1 — Vector Search*
+```mermaid
+flowchart LR
+    A[User Query] --> B[Embed with\nnomic-embed-text-v1.5]
+    B --> C[CALL db.index.vector.queryNodes]
+    C --> D[Top-K TranscriptChunks\nby cosine similarity]
+```
+*Stage 2 — Graph Traversal & Filtering*
+```
+TranscriptChunk IDs → MATCH (chunk)<-[:HAS_CHUNK]-(item:Item)
+                    → MATCH (meeting)-[:HAS_ITEM]->(item)
+                    → MATCH (meeting)-[:TAKES_PLACE_IN]->(city)
+                    → MATCH (item)-[:OF_TYPE]->(itemType)
+                    → filter by city_name, type_name (if present)
+                    → return full enriched context
+```
+*Stage 3 — Answer Generation*
+The enriched results (item summaries, evidence chunks, city, meeting date, links) are assembled into an LLM context and passed to **Claude Sonnet** for answer synthesis. (switched to *meta-llama/llama-4-scout-17b-16e-instruct* via Groq in Live Demo due to API key constraints for deployment)
+
+*Entity Extraction*
+A lightweight **Claude Haiku** (switched to *llama-3.1-8b-instant* model via Groq in Live Demo) parses the user query to extract structured filters (city name, item type) before retrieval. Valid values are enumerated explicitly in the extraction prompt
+
+
