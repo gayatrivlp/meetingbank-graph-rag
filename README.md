@@ -109,5 +109,13 @@ HUGGINGFACE_TOKEN=<your-huggingface-token>
 ```
 streamlit run app.py
 ```
+## Limitations
+- **Dataset scope**- Only `MeetingBank.json` was used — audio, video, and extractive summary files were excluded. The dataset covers 6 cities, conclusions about individual cities should not be generalized.
+- **Embedding model constraints**- `nomic-embed-text-v1.5 (768-dim)` was chosen for its strong performance-to-cost ratio as a free model. A larger or domain-fine-tuned embedding model may improve retrieval precision on technical legislative language.
+- **Single-document chunks**- Chunks are derived from individual agenda items. Cross-item or cross-meeting reasoning is handled by the graph traversal layer, but the LLM context is still bounded by the top-K chunks returned.
 
-
+## Future Work
+- **Extended filtering**- The pipeline supports city and item type filtering today. A natural next step is enabling multi-city and multi-type queries — exposed as multiselect dropdowns in the UI — along with date range filtering on `meeting_date`, broadening the range of questions users can ask without any architectural change(requiring only Cypher additions)
+- **Multi-hop graph traversal**- The graph schema is designed to support traversal beyond the matched item — to sibling items within the same meeting, or across meetings in the same city. Implementing it would enable richer contextual queries using the graph structure like "What else was on the agenda when housing came up in Denver?" rather than relying on the LLM to infer connections from retrieved context.
+- **Graph-native aggregation**- Frequency and summarization queries across an entire city or dataset like 'What topics come up most in Denver?' — would require a dedicated analytical query path alongside the RAG pipeline, a meaningful architectural addition that would significantly expand what the system can answer
+- **Speaker attribution** as an opt-in layer. Speaker nodes were excluded by design for this use case. Adding them as an optional traversal layer would extend the system to support attribution queries — "Who voted for the housing ordinance?" — without complicating the primary retrieval path
