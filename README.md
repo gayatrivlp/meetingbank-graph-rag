@@ -16,7 +16,7 @@ Graph RAG adds a knowledge graph layer where entities are nodes and their relati
 This system uses two-stage Graph RAG: Stage 1 runs vector similarity search on *TranscriptChunk* nodes, Stage 2 traverses the graph from those chunks to retrieve the full structured context of each matched item (city, meeting, item type, summary, links) and applies city and item type filters during traversal. The LLM then reasons over the enriched context to synthesize an answer.
 
 ## Dataset
-**MeetingBank** (Hu et al., ACL 2023) — a benchmark dataset of 1,366 city council meetings from 6 U.S. municipalities:
+[**MeetingBank** (Hu et al., ACL 2023)](https://meetingbank.github.io/dataset/) — a benchmark dataset of 1,366 city council meetings from 6 U.S. municipalities:
 - Seattle
 - King County
 - Denver
