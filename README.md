@@ -70,9 +70,9 @@ A lightweight **Claude Haiku** (switched to *llama-3.1-8b-instant* model via Gro
 | Graph Database | Neo4j AuraDB |
 | Embeddings | `nomic-ai/nomic-embed-text-v1.5` (768-dim, via HuggingFace SentenceTransformer) |
 | Vector Index | Neo4j native vector index (cosine similarity) |
-|Filter Extraction LLM | `Claude Haiku` via Anthropic API|
+|Filter Extraction LLM | `claude-haiku-4-5-20251001` via Anthropic API|
 | Filter Extraction LLM(live demo) | `llama-3.1-8b-instant` via Groq |
-| Answer Generation LLM | `Claude Sonnet` via Anthropic API |
+| Answer Generation LLM | `claude-sonnet-4-20250514` via Anthropic API |
 | Answer Generation LLM (live demo) | `meta-llama/llama-4-scout-17b-16e-instruct` via Groq |
 | Orchestration | LangChain |
 | Text Splitting | `RecursiveCharacterTextSplitter` (LangChain) |
