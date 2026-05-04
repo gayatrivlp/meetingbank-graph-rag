@@ -58,10 +58,56 @@ TranscriptChunk IDs → MATCH (chunk)<-[:HAS_CHUNK]-(item:Item)
                     → filter by city_name, type_name (if present)
                     → return full enriched context
 ```
-*Stage 3 — Answer Generation*
+*Stage 3 — Answer Generation*\
 The enriched results (item summaries, evidence chunks, city, meeting date, links) are assembled into an LLM context and passed to **Claude Sonnet** for answer synthesis. (switched to *meta-llama/llama-4-scout-17b-16e-instruct* via Groq in Live Demo due to API key constraints for deployment)
 
-*Entity Extraction*
+*Entity Extraction*\
 A lightweight **Claude Haiku** (switched to *llama-3.1-8b-instant* model via Groq in Live Demo) parses the user query to extract structured filters (city name, item type) before retrieval. Valid values are enumerated explicitly in the extraction prompt
+
+## Tech Stack
+| Component | Tool |
+|---|---|
+| Graph Database | Neo4j AuraDB |
+| Embeddings | `nomic-ai/nomic-embed-text-v1.5` (768-dim, via HuggingFace SentenceTransformer) |
+| Vector Index | Neo4j native vector index (cosine similarity) |
+|Filter Extraction LLM | `Claude Haiku` via Anthropic API|
+| Filter Extraction LLM(live demo) | `llama-3.1-8b-instant` via Groq |
+| Answer Generation LLM | `Claude Sonnet` via Anthropic API |
+| Answer Generation LLM (live demo) | `meta-llama/llama-4-scout-17b-16e-instruct` via Groq |
+| Orchestration | LangChain |
+| Text Splitting | `RecursiveCharacterTextSplitter` (LangChain) |
+| Ingestion | Google Colab (T4 GPU, ~25–30 min for full dataset) |
+| Demo | Streamlit Cloud |
+
+## Ingestion Pipeline
+The pipeline is resumable: embeddings are cached to a pickle file on Google Drive, so if the Colab runtime dies, it picks up from the last checkpoint rather than re-embedding everything from scratch. All writes use MERGE to prevent duplicates.
+
+## Running Locally
+**Prerequisites**
+- Neo4j AuraDB instance (free tier works)
+- Groq API key (free at console.groq.com)
+- Anthropic API
+
+**Setup**
+```
+git clone https://github.com/gayatrivlp/meetingbank-graph-rag.git
+cd meetingbank-graph-rag
+pip install -r requirements.txt
+```
+**Environment Variables**\
+Set the following in your environment or a .env file:
+```
+NEO4J_URI=neo4j+s://<your-instance>.databases.neo4j.io
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=<your-password>
+NEO4J_DATABASE=<your-database>
+GROQ_KEY=<your-groq-key>
+ANTHROPIC_KEY=<your-anthropic-key>
+HUGGINGFACE_TOKEN=<your-huggingface-token>
+```
+**Run**
+```
+streamlit run app.py
+```
 
 
